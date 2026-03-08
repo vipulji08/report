@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reels Analytics Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --green: #00e5a0;
+    --red: #ff4d6d;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,92,252,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -150px; right: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(252,92,125,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text {
+    font-size: 1.1rem; font-weight: 800; letter-spacing: -0.5px;
+  }
+  .logo-text span { color: var(--accent); }
+
+  .header-stats {
+    display: flex; gap: 24px;
+  }
+  .hstat {
+    text-align: right;
+  }
+  .hstat-val {
+    font-size: 1rem; font-weight: 700; color: var(--green);
+    font-family: var(--font-mono);
+  }
+  .hstat-label {
+    font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .main {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 40px 40px;
+    position: relative; z-index: 1;
+  }
+
+  .page-title {
+    font-size: 2.2rem; font-weight: 800; letter-spacing: -1px;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg, var(--text), var(--muted));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .page-sub {
+    color: var(--muted); font-size: 0.85rem; font-family: var(--font-mono);
+    margin-bottom: 36px;
+  }
+
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* INPUT PANEL */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .panel-title {
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--muted); margin-bottom: 22px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--muted); margin-bottom: 7px;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: none;
+  }
+  .field input:focus, .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.12);
+  }
+  .field textarea { height: 72px; line-height: 1.5; }
+
+  .view-entry-section {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .view-entry-title {
+    font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1px; font-weight: 600; margin-bottom: 12px;
+  }
+  .view-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .view-row .field { margin-bottom: 0; }
+
+  .btn-add-view {
+    width: 100%; padding: 8px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: 0.75rem; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-add-view:hover {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(124,92,252,0.05);
+  }
+
+  .btn-submit {
+    width: 100%; padding: 13px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; border-radius: 12px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 0.9rem; font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s, transform 0.15s;
+    margin-top: 4px;
+  }
+  .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-submit:active { transform: translateY(0); }
+
+  /* RIGHT PANEL */
+  .right-col {
+    display: flex; flex-direction: column; gap: 24px;
+  }
+
+  /* REELS LIST */
+  .reels-list {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .reel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .reel-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px rgba(124,92,252,0.1);
+  }
+  .reel-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 4px 24px rgba(124,92,252,0.15);
+  }
+  .reel-card-top {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .reel-name {
+    font-size: 1rem; font-weight: 700; letter-spacing: -0.3px;
+  }
+  .reel-meta {
+    font-size: 0.72rem; color: var(--muted);
+    font-family: var(--font-mono);
+    margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;
+  }
+  .reel-desc {
+    font-size: 0.78rem; color: var(--muted);
+    margin-top: 8px; line-height: 1.5;
+  }
+  .reel-badge {
+    display: flex; gap: 8px; flex-shrink: 0;
+  }
+  .badge {
+    font-size: 0.65rem; font-weight: 700; font-family: var(--font-mono);
+    padding: 3px 9px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge.trending-up { background: rgba(0,229,160,0.12); color: var(--green); }
+  .badge.trending-down { background: rgba(255,77,109,0.12); color: var(--red); }
+  .badge.neutral { background: rgba(107,107,138,0.15); color: var(--muted); }
+
+  .reel-totals {
+    display: flex; gap: 20px; margin-top: 12px;
+    padding-top: 12px; border-top: 1px solid var(--border);
+  }
+  .reel-total-item { display: flex; flex-direction: column; }
+  .reel-total-val {
+    font-size: 0.95rem; font-weight: 700;
+    font-family: var(--font-mono); color: var(--text);
+  }
+  .reel-total-label {
+    font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px;
+  }
+
+  .btn-delete {
+    background: transparent; border: none;
+    color: var(--muted); font-size: 0.8rem; cursor: pointer;
+    padding: 4px 6px; border-radius: 6px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-delete:hover { color: var(--red); background: rgba(255,77,109,0.1); }
+
+  /* CHART PANEL */
+  .chart-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    position: relative; overflow: hidden;
+  }
+  .chart-panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--green), var(--accent));
+  }
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .chart-title {
+    font-size: 1rem; font-weight: 700;
+  }
+  .chart-subtitle {
+    font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;
+  }
+  .chart-legend {
+    display: flex; gap: 14px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.7rem; font-family: var(--font-mono); color: var(--muted);
+  }
+  .legend-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%; height: 220px;
+  }
+  canvas#chartCanvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .empty-state {
+    text-align: center; padding: 48px 20px; color: var(--muted);
+  }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+  .empty-text { font-size: 0.85rem; font-family: var(--font-mono); }
+
+  .view-entries-list {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 12px;
+  }
+  .view-entry-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: var(--font-mono); font-size: 0.8rem;
+  }
+  .view-entry-day { color: var(--muted); }
+  .view-entry-count { font-weight: 500; }
+  .view-entry-delta { margin-left: auto; font-size: 0.72rem; font-weight: 600; }
+  .delta-up { color: var(--green); }
+  .delta-down { color: var(--red); }
+
+  .no-reels {
+    grid-column: 1 / -1;
+    text-align: center; padding: 60px;
+    color: var(--muted); font-family: var(--font-mono); font-size: 0.85rem;
+  }
+  .no-reels-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .reel-card { animation: fadeSlide 0.3s ease; }
+
+  /* Scrollable reels list */
+  .reels-list-wrap {
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .reels-list-wrap::-webkit-scrollbar { width: 4px; }
+  .reels-list-wrap::-webkit-scrollbar-track { background: transparent; }
+  .reels-list-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .dynamic-views {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 160px; overflow-y: auto;
+    margin-bottom: 8px;
+    padding-right: 2px;
+  }
+  .dynamic-views::-webkit-scrollbar { width: 3px; }
+  .dynamic-views::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .dyn-row {
+    display: grid; grid-template-columns: 1fr 1fr 28px; gap: 8px; align-items: center;
+  }
+  .dyn-row input {
+    width: 100%;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text);
+    font-family: var(--font-mono); font-size: 0.82rem;
+    padding: 8px 10px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .dyn-row input:focus { border-color: var(--accent); }
+  .btn-rm {
+    background: transparent; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 1rem; line-height: 1;
+    padding: 4px; border-radius: 5px;
+    transition: color 0.2s;
+  }
+  .btn-rm:hover { color: var(--red); }
+
+  .toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--green);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 0.82rem; font-family: var(--font-mono);
+    color: var(--green);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 9999;
+    animation: fadeSlide 0.3s ease;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🎬</div>
+    <div class="logo-text">Reels<span>Analytics</span></div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat">
+      <div class="hstat-val" id="totalReelsCount">0</div>
+      <div class="hstat-label">Reels</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val" id="totalViewsCount">0</div>
+      <div class="hstat-label">Total Views</div>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+  <div class="page-title">Reels Tracker</div>
+  <div class="page-sub">// track views · analyze trends · measure growth</div>
+
+  <div class="grid-layout">
+    <!-- INPUT PANEL -->
+    <div class="panel">
+      <div class="panel-title">Add Reel</div>
+
+      <div class="field">
+        <label>Reel Name</label>
+        <input type="text" id="reelName" placeholder="e.g. Morning Routine #3">
+      </div>
+      <div class="field">
+        <label>Reel Link</label>
+        <input type="text" id="reelLink" placeholder="https://instagram.com/reel/...">
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea id="reelDesc" placeholder="What's this reel about?"></textarea>
+      </div>
+
+      <div class="view-entry-section">
+        <div class="view-entry-title">📊 View Entries (Day → Views)</div>
+        <div class="dynamic-views" id="dynamicViews">
+          <!-- dynamic rows injected here -->
+        </div>
+        <button class="btn-add-view" onclick="addViewRow()">+ Add View Entry</button>
+      </div>
+
+      <button class="btn-submit" onclick="saveReel()">Save Reel →</button>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+      <!-- CHART PANEL -->
+      <div class="chart-panel" id="chartPanel">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title" id="chartTitle">Select a reel to view chart</div>
+            <div class="chart-subtitle" id="chartSubtitle">Click any reel card below</div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Growth</div>
+            <div class="legend-dot" style="background:var(--red)"></div><div class="legend-item" style="gap:0"> Decline</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chartCanvas"></canvas>
+          <div class="empty-state" id="chartEmpty">
+            <div class="empty-icon">📈</div>
+            <div class="empty-text">No data to display yet</div>
+          </div>
+        </div>
+        <!-- view entries list below chart -->
+        <div class="view-entries-list" id="viewEntriesList"></div>
+      </div>
+
+      <!-- REELS LIST -->
+      <div class="panel">
+        <div class="panel-title">Your Reels</div>
+        <div class="reels-list-wrap">
+          <div class="reels-list" id="reelsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================
+// STATE & STORAGE
+// =====================
+let reels = JSON.parse(localStorage.getItem('reels_data') || '[]');
+let selectedReelId = null;
+let viewRowCount = 0;
+
+function saveToStorage() {
+  localStorage.setItem('reels_data', JSON.stringify(reels));
+}
+
+// =====================
+// INIT
+// =====================
+window.addEventListener('DOMContentLoaded', () => {
+  addViewRow();
+  renderReelsList();
+  updateHeaderStats();
+  if (reels.length > 0) selectReel(reels[0].id);
+});
+
+// =====================
+// VIEW ROWS (dynamic)
+// =====================
+function addViewRow() {
+  viewRowCount++;
+  const id = 'vrow_' + viewRowCount;
+  const wrap = document.getElementById('dynamicViews');
+  const div = document.createElement('div');
+  div.className = 'dyn-row';
+  div.id = id;
+  div.innerHTML = `
+    <input type="number" placeholder="Day #" min="1" class="vr-day">
+    <input type="number" placeholder="Views" min="0" class="vr-views">
+    <button class="btn-rm" onclick="removeViewRow('${id}')" title="Remove">✕</button>
+  `;
+  wrap.appendChild(div);
+}
+
+function removeViewRow(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function getViewRowData() {
+  const rows = document.querySelectorAll('#dynamicViews .dyn-row');
+  const entries = [];
+  rows.forEach(row => {
+    const day = parseInt(row.querySelector('.vr-day').value);
+    const views = parseInt(row.querySelector('.vr-views').value);
+    if (!isNaN(day) && !isNaN(views)) {
+      entries.push({ day, views });
+    }
+  });
+  entries.sort((a,b) => a.day - b.day);
+  return entries;
+}
+
+// =====================
+// SAVE REEL
+// =====================
+function saveReel() {
+  const name = document.getElementById('reelName').value.trim();
+  const link = document.getElementById('reelLink').value.trim();
+  const desc = document.getElementById('reelDesc').value.trim();
+  const viewEntries = getViewRowData();
+
+  if (!name) { showToast('⚠️ Reel name is required'); return; }
+
+  const reel = {
+    id: Date.now().toString(),
+    name,
+    link,
+    desc,
+    viewEntries,
+    createdAt: new Date().toISOString()
+  };
+
+  reels.unshift(reel);
+  saveToStorage();
+  renderReelsList();
+  updateHeaderStats();
+  selectReel(reel.id);
+  resetForm();
+  showToast('✓ Reel saved successfully');
+}
+
+function resetForm() {
+  document.getElementById('reelName').value = '';
+  document.getElementById('reelLink').value = '';
+  document.getElementById('reelDesc').value = '';
+  document.getElementById('dynamicViews').innerHTML = '';
+  viewRowCount = 0;
+  addViewRow();
+}
+
+// =====================
+// DELETE REEL
+// =====================
+function deleteReel(id, e) {
+  e.stopPropagation();
+  reels = reels.filter(r => r.id !== id);
+  saveToStorage();
+  if (selectedReelId === id) {
+    selectedReelId = null;
+    clearChart();
+  }
+  renderReelsList();
+  updateHeaderStats();
+  showToast('🗑 Reel deleted');
+  if (reels.length > 0 && !selectedReelId) selectReel(reels[0].id);
+}
+
+// =====================
+// TREND BADGE
+// =====================
+function getTrend(viewEntries) {
+  if (!viewEntries || viewEntries.length < 2) return 'neutral';
+  const last = viewEntries[viewEntries.length - 1].views;
+  const prev = viewEntries[viewEntries.length - 2].views;
+  if (last > prev) return 'up';
+  if (last < prev) return 'down';
+  return 'neutral';
+}
+
+function formatNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1)+'M';
+  if (n >= 1000) return (n/1000).toFixed(1)+'K';
+  return n.toString();
+}
+
+// =====================
+// RENDER LIST
+// =====================
+function renderReelsList() {
+  const container = document.getElementById('reelsList');
+  if (reels.length === 0) {
+    container.innerHTML = `<div class="no-reels"><div class="no-reels-icon">🎬</div>No reels added yet</div>`;
+    return;
+  }
+  container.innerHTML = reels.map(r => {
+    const trend = getTrend(r.viewEntries);
+    const totalViews = r.viewEntries ? r.viewEntries.reduce((s,e) => s+e.views, 0) : 0;
+    const days = r.viewEntries ? r.viewEntries.length : 0;
+    const badgeClass = trend === 'up' ? 'trending-up' : trend === 'down' ? 'trending-down' : 'neutral';
+    const badgeLabel = trend === 'up' ? '↑ Growing' : trend === 'down' ? '↓ Declining' : '→ Stable';
+    const isSelected = selectedReelId === r.id;
+    return `
+    <div class="reel-card ${isSelected ? 'selected' : ''}" onclick="selectReel('${r.id}')">
+      <div class="reel-card-top">
+        <div>
+          <div class="reel-name">${r.name}</div>
+          <div class="reel-meta">${r.link || '(no link)'}</div>
+        </div>
+        <div class="reel-badge">
+          <span class="badge ${badgeClass}">${badgeLabel}</span>
+          <button class="btn-delete" onclick="deleteReel('${r.id}', event)" title="Delete">✕</button>
+        </div>
+      </div>
+      ${r.desc ? `<div class="reel-desc">${r.desc}</div>` : ''}
+      <div class="reel-totals">
+        <div class="reel-total-item">
+          <span class="reel-total-val">${formatNum(totalViews)}</span>
+          <span class="reel-total-label">Total Views</span>
+        </div>
+        <div class="reel-total-item">
+          <span class="reel-total-val">${days}</span>
+          <span class="reel-total-label">Data Days</span>
+        </div>
+        ${r.viewEntries && r.viewEntries.length > 0 ? `
+        <div class="reel-total-item">
+          <span class="reel-total-val">${formatNum(Math.max(...r.viewEntries.map(e=>e.views)))}</span>
+          <span class="reel-total-label">Peak Views</span>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// =====================
+// SELECT REEL & CHART
+// =====================
+function selectReel(id) {
+  selectedReelId = id;
+  renderReelsList();
+  const reel = reels.find(r => r.id === id);
+  if (!reel) return;
+  document.getElementById('chartTitle').textContent = reel.name;
+  document.getElementById('chartSubtitle').textContent = reel.link || 'No link provided';
+  drawChart(reel.viewEntries || []);
+  renderViewEntriesList(reel.viewEntries || []);
+}
+
+function clearChart() {
+  document.getElementById('chartTitle').textContent = 'Select a reel to view chart';
+  document.getElementById('chartSubtitle').textContent = 'Click any reel card below';
+  document.getElementById('chartEmpty').style.display = 'block';
+  document.getElementById('viewEntriesList').innerHTML = '';
+  const canvas = document.getElementById('chartCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// =====================
+// CHART DRAWING
+// =====================
+function drawChart(entries) {
+  const canvas = document.getElementById('chartCanvas');
+  const emptyEl = document.getElementById('chartEmpty');
+
+  if (!entries || entries.length < 2) {
+    emptyEl.style.display = 'flex';
+    emptyEl.style.flexDirection = 'column';
+    emptyEl.style.alignItems = 'center';
+    emptyEl.style.justifyContent = 'center';
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  // Setup canvas
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 220 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '220px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width, H = 220;
+  const pad = { top: 20, right: 20, bottom: 36, left: 52 };
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const vals = entries.map(e => e.views);
+  const days = entries.map(e => e.day);
+  const maxV = Math.max(...vals) || 1;
+  const minV = Math.min(...vals);
+
+  const xScale = i => pad.left + (i / (entries.length - 1)) * chartW;
+  const yScale = v => pad.top + chartH - ((v - 0) / (maxV * 1.15)) * chartH;
+
+  // Grid lines
+  const gridCount = 4;
+  ctx.strokeStyle = 'rgba(42,42,61,0.8)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= gridCount; i++) {
+    const y = pad.top + (i / gridCount) * chartH;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + chartW, y); ctx.stroke();
+    // Y label
+    const val = Math.round(maxV * 1.15 * (1 - i/gridCount));
+    ctx.fillStyle = '#6b6b8a'; ctx.font = '500 10px DM Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(formatNum(val), pad.left - 8, y + 4);
+  }
+
+  // X labels
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#6b6b8a'; ctx.font = '500 10px DM Mono, monospace';
+  entries.forEach((e, i) => {
+    const x = xScale(i);
+    ctx.fillText('D' + e.day, x, H - 8);
+  });
+
+  // Draw segments with color based on trend
+  for (let i = 1; i < entries.length; i++) {
+    const x0 = xScale(i-1), y0 = yScale(entries[i-1].views);
+    const x1 = xScale(i), y1 = yScale(entries[i].views);
+    const isGrowing = entries[i].views >= entries[i-1].views;
+    const color = isGrowing ? '#00e5a0' : '#ff4d6d';
+
+    // Filled area under segment
+    const grad = ctx.createLinearGradient(0, y0, 0, pad.top + chartH);
+    grad.addColorStop(0, isGrowing ? 'rgba(0,229,160,0.18)' : 'rgba(255,77,109,0.18)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.moveTo(x0, pad.top + chartH);
+    ctx.lineTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x1, pad.top + chartH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line segment
+    ctx.beginPath();
+    ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  // Dots + tooltip areas
+  entries.forEach((e, i) => {
+    const x = xScale(i), y = yScale(e.views);
+    const isGrowing = i === 0 || e.views >= entries[i-1].views;
+    const color = isGrowing ? '#00e5a0' : '#ff4d6d';
+    // Outer glow
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = isGrowing ? 'rgba(0,229,160,0.2)' : 'rgba(255,77,109,0.2)';
+    ctx.fill();
+    // Dot
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    // Value label
+    ctx.fillStyle = color;
+    ctx.font = 'bold 10px DM Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(formatNum(e.views), x, y - 10);
+  });
+}
+
+// =====================
+// VIEW ENTRIES LIST
+// =====================
+function renderViewEntriesList(entries) {
+  const container = document.getElementById('viewEntriesList');
+  if (!entries.length) { container.innerHTML = ''; return; }
+  container.innerHTML = entries.map((e, i) => {
+    let delta = '';
+    if (i > 0) {
+      const diff = e.views - entries[i-1].views;
+      const pct = entries[i-1].views > 0 ? Math.round((diff/entries[i-1].views)*100) : 0;
+      delta = diff >= 0
+        ? `<span class="view-entry-delta delta-up">↑ ${formatNum(Math.abs(diff))} (+${pct}%)</span>`
+        : `<span class="view-entry-delta delta-down">↓ ${formatNum(Math.abs(diff))} (${pct}%)</span>`;
+    }
+    return `<div class="view-entry-item">
+      <span class="view-entry-day">Day ${e.day}</span>
+      <span class="view-entry-count">${formatNum(e.views)} views</span>
+      ${delta}
+    </div>`;
+  }).join('');
+}
+
+// =====================
+// HEADER STATS
+// =====================
+function updateHeaderStats() {
+  document.getElementById('totalReelsCount').textContent = reels.length;
+  const totalViews = reels.reduce((s,r) => {
+    return s + (r.viewEntries ? r.viewEntries.reduce((ss,e) => ss+e.views,0) : 0);
+  }, 0);
+  document.getElementById('totalViewsCount').textContent = formatNum(totalViews);
+}
+
+// =====================
+// TOAST
+// =====================
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+// Resize chart on window resize
+window.addEventListener('resize', () => {
+  if (selectedReelId) {
+    const reel = reels.find(r => r.id === selectedReelId);
+    if (reel) drawChart(reel.viewEntries || []);
+  }
+});
+</script>
+</body>
+</html>
